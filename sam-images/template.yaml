@@ -1,0 +1,54 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: An AWS SAM template for the image processing application.
+
+Resources:
+  UploadFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: UploadToS3Function
+      Handler: src/handlers/uploadService.uploadToS3
+      Runtime: nodejs16.x
+      CodeUri: .
+      Role: arn:aws:iam::973887463509:role/lambda-outsource
+      Events:
+        UploadApi:
+          Type: Api
+          Properties:
+            Path: /uploadTestImages
+            Method: post
+      Environment:
+        Variables:
+          PRIMITIVE_BUCKET_NAME: bucket-for-primitive
+
+
+  CompressionFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: CompressImageFunction
+      Handler: src/handlers/compressionHandler.compressImage
+      Runtime: nodejs16.x
+      CodeUri: .
+      Role: arn:aws:iam::973887463509:role/lambda-outsource
+      Layers:
+        - arn:aws:lambda:us-west-2:973887463509:layer:sharp-layer:6
+      MemorySize: 512
+      Timeout: 300
+      Events:
+        S3Event:
+          Type: S3
+          Properties:
+            Bucket:
+              Ref: PrimitiveBucket
+            Events: s3:ObjectCreated:*
+      Environment:
+        Variables:
+          COMPRESS_BUCKET_NAME: happin-public
+          PRIMITIVE_BUCKET_NAME: bucket-for-primitive
+
+  PrimitiveBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: bucket-for-primitive
+
+
