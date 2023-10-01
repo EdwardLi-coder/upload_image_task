@@ -42,7 +42,7 @@ export const compressImage = async (event: any) => {
             }));
             console.log(JSON.stringify(result, null, 2))
         }
-        // 考虑是否需要删除原文件
+        //Delete the original file
         await s3.send(new DeleteObjectCommand(params));
 
 
